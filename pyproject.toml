@@ -1,0 +1,14 @@
+[project]
+name = "local-llm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "deepagents==0.5.3",
+    "dotenv==0.9.9",
+    "fastmcp==3.2.4",
+    "langchain-mcp-adapters==0.2.2",
+    "langchain-ollama==1.1.0",
+    "langgraph==1.1.9",
+]
