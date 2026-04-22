@@ -57,8 +57,8 @@ The agent (Gemma 4 running in Ollama) decides which MCP tool to call based on th
 **1. Clone the repository**
 
 ```bash
-git clone <repo-url>
-cd local_llm
+git clone https://github.com/ai-with-ali/local-llm.git
+cd local-llm
 ```
 
 **2. Install dependencies**
@@ -94,7 +94,7 @@ python -m src.mcp.server.math.server
 **Terminal 2 — Start the agent**
 
 ```bash
-python main.py
+uv run -m src.app
 ```
 
 Then type your question at the prompt:
@@ -111,15 +111,14 @@ Agent: The result is 42.
 ## Project Structure
 
 ```
-.
-├── main.py                          # Entry point
+.                         
 ├── pyproject.toml                   # Dependencies
 ├── .env                             # Environment config (not committed)
 └── src/
-    ├── app.py                       # CLI loop — sends user input to the agent
+    ├── app.py                       # Entry point - CLI loop — sends user input to the agent
     ├── agents/
     │   └── da_agent/
-    │       └── graph.py             # Builds the LangGraph agent with Ollama + tools
+    │       └── graph.py             # Builds the LangGraph agent with Ollama + gemma4:e4b and tools
     └── mcp/
         ├── client/
         │   └── master_mcp_client.py # MultiServerMCPClient — discovers tools from MCP servers
