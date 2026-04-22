@@ -3,7 +3,7 @@
 This project demonstrates how to build a fully local, cost-free AI agent using:
 
 - **[Ollama](https://ollama.com/)** — runs large language models locally on your machine
-- **[Gemma 4 (e4b)](https://blog.google/technology/developers/gemma-4-models/)** — Google's efficient open-weight model that runs on consumer hardware
+- **[Gemma 4 (e4b)](https://ai.google.dev/gemma/docs/core)** — Google's efficient open-weight model that runs on consumer hardware
 - **[LangGraph](https://github.com/langchain-ai/langgraph)** — agent orchestration framework
 - **[FastMCP](https://github.com/jlowin/fastmcp)** — lightweight Model Context Protocol (MCP) server for exposing tools to the agent
 
