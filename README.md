@@ -24,11 +24,11 @@ No API keys. No cloud costs. Everything runs on your own machine.
 
 ```
 ┌──────────────┐     asks question     ┌─────────────────────┐
-│   User CLI   │ ───────────────────▶  │  DataAnalysis Agent  │
-│  (src/app.py)│                       │  (LangGraph + Gemma) │
+│   User CLI   │ ───────────────────   │  Ollama running     │
+│  (src/app.py)│                       │  (local LLM)        │
 └──────────────┘                       └──────────┬──────────┘
                                                   │  calls tools via MCP
-                                                  ▼
+                                                  |
                                        ┌─────────────────────┐
                                        │   MCP Server         │
                                        │ (FastMCP / HTTP)     │
