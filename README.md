@@ -1,60 +1,72 @@
-# Local LLM — Building AI Agents for Free with Gemma4 + Ollama using Langchain
+# Local LLM — Free AI Agents with Gemma 4 + Ollama + Chainlit
 
-This project demonstrates how to build a fully local, cost-free AI agent using:
+> Build and chat with a fully local AI agent — no API keys, no cloud costs, everything runs on your own machine.
 
-- **[Ollama](https://ollama.com/)** — runs large language models locally on your machine
-- **[Gemma 4 (e4b)](https://ai.google.dev/gemma/docs/core)** — Google's efficient open-weight model that runs on consumer hardware
-- **[LangChain](https://github.com/langchain-ai/langgraph)** — agent orchestration framework
-- **[FastMCP](https://github.com/jlowin/fastmcp)** — lightweight Model Context Protocol (MCP) server for exposing tools to the agent
-
-No API keys. No cloud costs. Everything runs on your own machine.
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![uv](https://img.shields.io/badge/package%20manager-uv-purple)](https://github.com/astral-sh/uv)
 
 ---
 
-## What You Will Learn
+## Overview
 
-- How to connect a LangGraph agent to a locally running Ollama model
-- How to expose custom Python functions as tools via an MCP server
-- How the agent uses those tools to answer questions instead of relying on its parametric knowledge
-- How to structure a multi-component AI project cleanly (agent, MCP client, MCP server)
+This project demonstrates how to build a production-style AI agent that runs entirely offline using open-weight models. It combines a LangGraph reasoning loop, MCP-based tool serving, and a Chainlit web UI into a clean, modular architecture.
+
+**Stack**
+
+| Component | Role |
+|---|---|
+| [Ollama](https://ollama.com/) | Serves the LLM locally via an OpenAI-compatible HTTP API |
+| [Gemma 4 e4b](https://ai.google.dev/gemma/docs/core) | 4-bit quantised model (~2 GB), runs on laptop GPU or CPU |
+| [LangGraph](https://github.com/langchain-ai/langgraph) | Agent reasoning loop with persistent memory and checkpointing |
+| [FastMCP](https://github.com/jlowin/fastmcp) | Exposes Python functions as MCP tools over HTTP |
+| [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters) | Discovers and wraps MCP tools for use in LangChain agents |
+| [Chainlit](https://chainlit.io/) | Streaming chat web UI with per-session thread management |
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────┐     asks question     ┌─────────────────────┐
-│   User CLI   │ ───────────────────   │  Ollama running     │
-│  (src/app.py)│                       │  (local LLM)        │
-└──────────────┘                       └──────────┬──────────┘
-                                                  │  calls tools via MCP
-                                                  |
-                                       ┌─────────────────────┐
-                                       │   MCP Server         │
-                                       │ (FastMCP / HTTP)     │
-                                       │  - add(a, b)         │
-                                       │  - multiply(a, b)    │
-                                       └─────────────────────┘
+┌─────────────────────┐    user message     ┌───────────────────────┐
+│   Chainlit Web UI   │ ─────────────────>  │   LangGraph Agent     │
+│   (src/app.py)      │ <─────────────────  │   (da_agent/graph.py) │
+│   localhost:8000    │   streamed tokens   └──────────┬────────────┘
+└─────────────────────┘                               │ MCP tool calls
+                                                      ▼
+                                          ┌───────────────────────┐
+                                          │   MCP Server          │
+                                          │   (FastMCP / HTTP)    │
+                                          │   · add(a, b)         │
+                                          │   · multiply(a, b)    │
+                                          └───────────────────────┘
+                                                      │
+                                                      ▼
+                                          ┌───────────────────────┐
+                                          │   Ollama              │
+                                          │   gemma4:e4b          │
+                                          │   localhost:11434     │
+                                          └───────────────────────┘
 ```
 
-The agent (Gemma 4 running in Ollama) decides which MCP tool to call based on the user's question, invokes it, and returns the result — no cloud inference required.
+Each browser session gets its own `thread_id` — conversation memory is scoped per session via LangGraph's `MemorySaver` checkpointer.
 
 ---
 
 ## Prerequisites
 
-| Requirement | Notes |
+| Requirement | Version / Notes |
 |---|---|
-| Python ≥ 3.12 | |
-| [Ollama](https://ollama.com/download) installed and running | `ollama serve` |
-| Gemma 4 e4b model pulled | `ollama pull gemma4:e4b` |
-| [uv](https://github.com/astral-sh/uv) (recommended) or pip | For dependency management |
+| Python | ≥ 3.12 |
+| [uv](https://github.com/astral-sh/uv) | Recommended package manager |
+| [Ollama](https://ollama.com/download) | Must be running (`ollama serve`) |
+| Gemma 4 e4b | Pull with `ollama pull gemma4:e4b` |
 
 ---
 
-## Setup
+## Quick Start
 
-**1. Clone the repository**
+**1. Clone**
 
 ```bash
 git clone https://github.com/ai-with-ali/local-llm.git
@@ -65,80 +77,102 @@ cd local-llm
 
 ```bash
 uv sync
-# or
-pip install -e .
 ```
 
-**3. Configure environment variables**
+**3. Configure environment**
 
-Create a `.env` file in the project root:
+```bash
+cp .env.example .env
+```
+
+`.env.example`:
 
 ```env
 OLLAMA_SERVER_URL=http://localhost:11434
-MCP_DataAnalysis_Host=127.0.0.1
+MCP_DataAnalysis_Host=localhost
 MCP_DataAnalysis_Port=8000
+```
+
+**4. Start Ollama**
+
+```bash
+ollama serve
+ollama pull gemma4:e4b   # first run only
 ```
 
 ---
 
-## Running the Project
+## Running
 
-You need two processes running simultaneously — the MCP server and the agent.
+Two processes must run simultaneously.
 
-**Terminal 1 — Start the MCP tool server**
-
-```bash
-python -m src.mcp.server.math.server
-```
-
-**Terminal 2 — Start the agent**
+**Terminal 1 — MCP tool server**
 
 ```bash
-uv run -m src.app
+uv run python -m src.mcp.server.math.server
 ```
 
-Then type your question at the prompt:
+**Terminal 2 — Chainlit web UI**
 
+```bash
+uv run chainlit run src/app.py --port 8000
 ```
-Data Analysis Agent ready. Type 'exit' or 'quit' to stop.
 
-You: what is 7 multiplied by 6?
-Agent: The result is 42.
-```
+Open [http://localhost:8000](http://localhost:8000) in your browser. Each session maintains its own conversation history.
+
+> **VS Code users:** use the **Run & Debug** panel. Select *"Debug MCP Math Server"* or *"Run Chainlit App"* from the dropdown and press F5.
 
 ---
 
 ## Project Structure
 
 ```
-.                         
-├── pyproject.toml                   # Dependencies
-├── .env                             # Environment config (not committed)
+.
+├── pyproject.toml                    # Project metadata and dependencies
+├── .env.example                      # Environment variable template
+├── chainlit.md                       # Chainlit welcome screen
 └── src/
-    ├── app.py                       # Entry point - CLI loop — sends user input to the agent
+    ├── app.py                        # Chainlit UI — session lifecycle and message streaming
     ├── agents/
     │   └── da_agent/
-    │       └── graph.py             # Builds the LangGraph agent with Ollama + gemma4:e4b and tools
+    │       └── graph.py              # LangGraph agent (Ollama + tools + MemorySaver)
     └── mcp/
         ├── client/
-        │   └── master_mcp_client.py # MultiServerMCPClient — discovers tools from MCP servers
+        │   └── master_mcp_client.py  # MultiServerMCPClient — tool discovery
         └── server/
             └── math/
-                └── server.py        # FastMCP server exposing add() and multiply() as tools
+                └── server.py         # FastMCP server — add() and multiply() tools
 ```
 
 ---
 
-## Key Concepts
+## How It Works
 
-**Why Ollama?**
-Ollama makes it trivial to download and serve open-weight models locally. It exposes a standard OpenAI-compatible HTTP API, so it works seamlessly with LangChain's `ChatOllama` integration.
+1. **User sends a message** via the Chainlit UI.
+2. **`on_message`** wraps it in a `HumanMessage` and calls `agent.astream_events()`.
+3. **LangGraph** routes the message through the agent graph. If a tool is needed, it emits `on_tool_start` / `on_tool_end` events — shown as collapsible steps in the UI.
+4. **The MCP server** executes the tool (e.g. `add(5, 7)`) and returns the result.
+5. **LLM tokens** are streamed back in real time via `on_chat_model_stream` events.
+6. **The final answer** is sent to the UI once streaming completes.
 
-**Why Gemma 4 e4b?**
-The `e4b` (4-bit quantized, ~2 GB) variant of Google's Gemma 4 runs comfortably on a laptop GPU or CPU while still being capable enough for tool-calling tasks.
+---
 
-**Why MCP?**
-The Model Context Protocol standardises how agents discover and call external tools. Using FastMCP as the server and `langchain-mcp-adapters` as the client means you can add new tools by writing a plain Python function — no manual schema definitions needed.
+## Key Design Decisions
 
-**Why LangGraph?**
-LangGraph gives the agent a persistent reasoning loop with checkpointing, so it can plan, call tools, observe results, and respond — all within a clean graph-based state machine.
+**Why MCP for tools?**
+MCP standardises tool discovery and invocation. Adding a new tool means writing a plain Python function decorated with `@mcp.tool()` — no manual JSON schema, no agent redeployment.
+
+**Why per-session agent instances?**
+Each `on_chat_start` creates a fresh agent with its own `MemorySaver` and `thread_id`. This gives complete session isolation without a shared database.
+
+**Why `astream_events` instead of `ainvoke`?**
+`astream_events(version="v2")` surfaces granular lifecycle events — tool calls appear as they happen, and LLM tokens stream in real time, giving users immediate feedback rather than waiting for a full response.
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/your-feature`
+3. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
+4. Open a pull request against `master`
