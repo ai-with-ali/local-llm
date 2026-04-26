@@ -27,26 +27,21 @@ This project demonstrates how to build a production-style AI agent that runs ent
 
 ## Architecture
 
-```
-┌─────────────────────┐    user message     ┌───────────────────────┐
-│   Chainlit Web UI   │ ─────────────────>  │   LangGraph Agent     │
-│   (src/app.py)      │ <─────────────────  │   (da_agent/graph.py) │
-│   localhost:8000    │   streamed tokens   └──────────┬────────────┘
-└─────────────────────┘                               │ MCP tool calls
-                                                      ▼
-                                          ┌───────────────────────┐
-                                          │   MCP Server          │
-                                          │   (FastMCP / HTTP)    │
-                                          │   · add(a, b)         │
-                                          │   · multiply(a, b)    │
-                                          └───────────────────────┘
-                                                      │
-                                                      ▼
-                                          ┌───────────────────────┐
-                                          │   Ollama              │
-                                          │   gemma4:e4b          │
-                                          │   localhost:11434     │
-                                          └───────────────────────┘
+```mermaid
+flowchart LR
+    UI["Chainlit Web UI\nsrc/app.py\nlocalhost:8000"]
+    Agent["LangGraph Agent\nda_agent/graph.py"]
+    Ollama["Ollama\ngemma4:e4b\nlocalhost:11434"]
+    MCP["MCP Server\nFastMCP / HTTP\nadd · multiply"]
+
+    UI -- "user message" --> Agent
+    Agent -- "streamed tokens" --> UI
+
+    Agent -- "prompt + context" --> Ollama
+    Ollama -- "model response" --> Agent
+
+    Agent -- "tool call (args)" --> MCP
+    MCP -- "tool result" --> Agent
 ```
 
 Each browser session gets its own `thread_id` — conversation memory is scoped per session via LangGraph's `MemorySaver` checkpointer.
@@ -128,20 +123,20 @@ Open [http://localhost:8000](http://localhost:8000) in your browser. Each sessio
 
 ```
 .
+├── src/
+│   ├── app.py                        # Chainlit UI — session lifecycle and message streaming
+│   ├── agents/
+│   │   └── da_agent/
+│   │       └── graph.py              # LangGraph agent (Ollama + tools + MemorySaver)
+│   └── mcp/
+│       ├── client/
+│       │   └── master_mcp_client.py  # MultiServerMCPClient — tool discovery
+│       └── server/
+│           └── math/
+│               └── server.py         # FastMCP server — add() and multiply() tools
 ├── pyproject.toml                    # Project metadata and dependencies
 ├── .env.example                      # Environment variable template
-├── chainlit.md                       # Chainlit welcome screen
-└── src/
-    ├── app.py                        # Chainlit UI — session lifecycle and message streaming
-    ├── agents/
-    │   └── da_agent/
-    │       └── graph.py              # LangGraph agent (Ollama + tools + MemorySaver)
-    └── mcp/
-        ├── client/
-        │   └── master_mcp_client.py  # MultiServerMCPClient — tool discovery
-        └── server/
-            └── math/
-                └── server.py         # FastMCP server — add() and multiply() tools
+└── chainlit.md                       # Chainlit welcome screen
 ```
 
 ---
