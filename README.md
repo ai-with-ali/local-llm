@@ -12,6 +12,10 @@
 
 This project demonstrates how to build a production-style AI agent that runs entirely offline using open-weight models. It combines a LangGraph reasoning loop, MCP-based tool serving, and a Chainlit web UI into a clean, modular architecture.
 
+![Agent demo](agent.gif)
+
+---
+
 **Stack**
 
 | Component | Role |
