@@ -35,7 +35,7 @@ This project demonstrates how to build a production-style AI agent that runs ent
 flowchart LR
     UI["Chainlit Web UI\nsrc/app.py\nlocalhost:8000"]
     Agent["LangGraph Agent\nda_agent/graph.py"]
-    Ollama["Ollama\ngemma4:e4b\nlocalhost:11434"]
+    Ollama["Ollama\ngemma4:e2b\nlocalhost:11434"]
     MCP["MCP Server\nFastMCP / HTTP\nadd · multiply"]
 
     UI -- "user message" --> Agent
@@ -59,7 +59,7 @@ Each browser session gets its own `thread_id` — conversation memory is scoped 
 | Python | ≥ 3.12 |
 | [uv](https://github.com/astral-sh/uv) | Recommended package manager |
 | [Ollama](https://ollama.com/download) | Must be running (`ollama serve`) |
-| Gemma 4 e4b | Pull with `ollama pull gemma4:e4b` |
+| Gemma 4 e2b | Pull with `ollama pull gemma4:e2b` |
 
 ---
 

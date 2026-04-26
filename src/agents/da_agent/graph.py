@@ -26,7 +26,7 @@ async def create_data_analysis_agent():
 
     llm = ChatOllama(
         base_url=os.environ["OLLAMA_SERVER_URL"],
-        model="gemma4:e4b",
+        model="gemma4:e2b",
         temperature=0,
     )
 
