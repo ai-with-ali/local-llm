@@ -143,8 +143,8 @@ Before you begin, make sure you have the following installed and running:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/ai-with-ali/local-llm.git
-cd local-llm
+git clone https://github.com/ai-with-ali/agentful.git
+cd agentful
 ```
 
 ### 2. Install dependencies
