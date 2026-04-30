@@ -16,12 +16,27 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "Run Agent",
+            // Equivalent to: uv run python -m src.a2a.agents.da_agent --port 10001
+            // Verify with: curl http://localhost:10001/.well-known/agent.json
+            "name": "Run DA Agent A2A Server",
+            "type": "debugpy",
+            "request": "launch",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "module": "src.a2a.agents.da_agent",
+            "args": ["--port", "10001"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            // Equivalent to: uv run chainlit run main.py --port 8000
+            "name": "Run Chainlit App",
             "type": "debugpy",
             "request": "launch",
             "python": "${workspaceFolder}/.venv/bin/python",
             "module": "chainlit",
-            "args": ["run", "src/app.py", "--port", "8000"],
+            "args": ["run", "main.py", "--port", "8000"],
             "console": "integratedTerminal",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
